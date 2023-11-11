@@ -2,9 +2,9 @@
 
 ## Requirements
 
-- Python3.10+
-- Docker
-- MongoDB
+-   Python3.10+
+-   Docker
+-   MongoDB
 
 ## Development
 
@@ -37,11 +37,8 @@ sudo docker compose up app --attach app
 `Dockerfile.dev`
 `Dockerfile.prod`
 
-### DB Model
-
-![Módelo de Base de datos](https://i.postimg.cc/yNkgYwd0/Diagrama-en-blanco.png)
-
 Exposed port (in both Dockerfiles): `6060`
+
 ## API Reference (Swagger)
 
 #### Swagger ui
