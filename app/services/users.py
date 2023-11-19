@@ -39,7 +39,7 @@ class Users():
         return inserted_user.id
 
     def update(self, userUpdate: UserUpdate, tokenData: TokenData):
-        valid_methods = ['email', 'password']
+        valid_methods = ['email', 'name']
         if userUpdate.method not in valid_methods:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -51,21 +51,7 @@ class Users():
         if userUpdate.method == 'email':
             user.update(**{userUpdate.method: userUpdate.data})
         else:
-            is_pass = bcrypt.checkpw(
-                bytes(userUpdate.data, 'utf-8'),
-                bytes(user.password, 'utf-8'),
-            )
-            if is_pass is True:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail='The password must not be the same as the previous one',
-                )
-            password = bcrypt.hashpw(
-                password=bytes(userUpdate.data, 'utf-8'),
-                salt=bcrypt.gensalt(),
-            ).decode('utf-8')
-            user.update(**{userUpdate.method: password})
-            return user.reload()
+            user.update(**{userUpdate.method: userUpdate.data})
 
 
 users_service = Users()

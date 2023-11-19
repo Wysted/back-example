@@ -38,11 +38,11 @@ async def register(user: User):
 
 @router.get(
     '',
-    response_model=Res[None],
+    response_model=Res[str],
     dependencies=[fastapi.Depends(auth_service.is_auth)],
 
 )
-async def get(tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
+async def get_user(tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
     data_user = users_service.get_by_id(tokenData.id)
     return responses.JSONResponse(
 
