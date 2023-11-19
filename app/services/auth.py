@@ -5,7 +5,7 @@ from app.dependencies import jwt, JWTError
 from app.dependencies import security
 from app.dependencies import exceptions
 from app.dependencies import status
-from app.dependencies import TokenData, UserTypes
+from app.dependencies import TokenData
 import bcrypt
 # FastAPI
 from app.dependencies import fastapi
@@ -22,6 +22,7 @@ schema = security.OAuth2PasswordBearer(
     tokenUrl="token",
 )
 
+
 class Auth():
     TOKEN_DATA_KEY = 'token_data'
     _exception = exceptions.HTTPException(
@@ -31,46 +32,53 @@ class Auth():
 
     async def is_auth(self, token: str = fastapi.Depends(schema)) -> None:
         try:
+            # Decodifica el token JWT. Remueve el prefijo 'Bearer', utiliza la clave secreta y el algoritmo de la configuración.
             payload = jwt.decode(
                 token.replace('Bearer ', ''),
                 settings.JWT_SECRET_KEY,
                 algorithms=[configuration.jwt_algotithm],
             )
+
+            # Establece los datos del token en un contexto compartido, creando un objeto TokenData con la información del usuario.
             context.setdefault(
                 self.TOKEN_DATA_KEY,
                 TokenData(
-                    user_type=UserTypes(payload['user_type']),
                     id=payload['id'],
                     sub=payload['sub']
                 ),
             )
         except JWTError:
+            # Lanza una excepción personalizada si hay un error en la decodificación del token.
             raise self._exception
-    
-    def roles(self, roles: typing.List[str]):
-        
-        def manageRoles():
-            tokenData: TokenData = context.data.get(self.TOKEN_DATA_KEY)
-            if all(role != tokenData.user_type for role in roles):
-                raise self._exception
-        return manageRoles
 
-    def decode_token(self, token: str = fastapi.Depends(schema)) -> TokenData:
         return context.data.get(self.TOKEN_DATA_KEY)
-    
+
     def __create_access_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
+        # Copia los datos a codificar para no modificar el original.
         to_encode = data.copy()
+
+        # Establece la fecha de expiración del token. Utiliza expires_delta si se proporciona, de lo contrario, un valor por defecto.
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
             expire = datetime.utcnow() + timedelta(minutes=configuration.access_token_expire_minutes)
-        to_encode.update({ 'exp': expire ,'sub' : "jwtTokenTatto"})
+
+        # Actualiza los datos a codificar con la fecha de expiración y un sujeto.
+        to_encode.update({'exp': expire, 'sub': "jwtTokenTatto"})
+
+        # Codifica los datos en un token JWT usando la clave secreta y el algoritmo de configuración.
         encoded_jwt = jwt.encode(
             to_encode,
             settings.JWT_SECRET_KEY,
             algorithm=configuration.jwt_algotithm,
         )
+
+        # Retorna el token JWT codificado.
         return encoded_jwt
+
+    def decode_token(self, token: str = fastapi.Depends(schema)) -> TokenData:
+        # Retorna los datos del token almacenados en el contexto global.
+        return context.data.get(self.TOKEN_DATA_KEY)
 
     def login(self, auth: AuthBody) -> TokenRes:
         user = users_service.get_by_email(auth.email)
@@ -89,16 +97,17 @@ class Auth():
                 detail='Email o contraseña no coinciden',
             )
         # Build token
+
         return TokenRes(
             token=self.__create_access_token(
-                { 'id': str(user.id), 'user_type': user.role.value },
+                {'id': str(user.id)},
             ),
             user={
                 'email': user.email,
                 'name': user.name,
                 'id': str(user.id),
-                'role': user.role.value,
             },
         )
+
 
 auth_service = Auth()

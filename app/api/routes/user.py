@@ -1,22 +1,23 @@
 # FastAPI
+from app.core.config import configuration
+from app.services.users import users_service
+from app.dependencies import auth_service
+from app.dependencies import TokenData
+from app.interfaces.user import User, UserUpdate
+from app.dependencies import Res
 from app.dependencies import fastapi
 from app.dependencies import responses
 
 status = fastapi.status
 # Interfaces
-from app.dependencies import Res
-from app.interfaces.user import User, UserUpdate
 # JWT
-from app.dependencies import TokenData, UserTypes
 # Services
-from app.dependencies import auth_service
-from app.services.users import users_service
 # Settings
-from app.core.config import configuration
 
 router = fastapi.APIRouter(
     prefix=f'{configuration.default_api}/users',
 )
+
 
 @router.post(
     '',
@@ -34,54 +35,40 @@ async def register(user: User):
         },
     )
 
-@router.post(
-    '/x',
+
+@router.get(
+    '',
     response_model=Res[None],
-    dependencies=[fastapi.Depends(auth_service.is_auth),fastapi.Depends(auth_service.roles([UserTypes.STUDIO_OWNER]))],
+    dependencies=[fastapi.Depends(auth_service.is_auth)],
 
 )
 async def get(tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
-    users = users_service.get_users()
+    data_user = users_service.get_by_id(tokenData.id)
     return responses.JSONResponse(
+
         status_code=200,
-        content = {
+        content={
             'success': True,
-            'body': users,
+            'body': {
+                "name" : data_user.name,
+                "email" : data_user.email
+            },
         }
     )
 
-# Actualizar datos Email o contraseña
-#Dejar como /user/update o /update?
-# @router.patch(
-#     '/update',
-#     response_model=Res[None],
-#     dependencies=[fastapi.Depends(auth_service.is_auth)],
 
-# )
-# async def update(userUpdate : UserUpdate,tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
-#     users_service.update(userUpdate,tokenData)
-#     return responses.JSONResponse(
-#         status_code=200,
-#         content = {
-#             'success': True,
-#             'body': '',
-#         }
-#     )
+@router.patch(
+    '/update',
+    response_model=Res[None],
+    dependencies=[fastapi.Depends(auth_service.is_auth)],
 
-# #Actualizar el estado del usuario 
-#Dejar como /user/state o /state?
-# @router.patch(
-#     '/user/state',
-#     response_model=Res[None],
-#     dependencies=[fastapi.Depends(auth_service.is_auth)],
-
-# )
-# async def update(userUpdate : UserUpdate,tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
-#     users_service.state(userUpdate,tokenData)
-#     return responses.JSONResponse(
-#         status_code=200,
-#         content = {
-#             'success': True,
-#             'body': '',
-#         }
-#     )
+)
+async def update(userUpdate: UserUpdate, tokenData: TokenData = fastapi.Depends(auth_service.decode_token)) -> Res:
+    users_service.update(userUpdate, tokenData)
+    return responses.JSONResponse(
+        status_code=200,
+        content={
+            'success': True,
+            'body': "Usuario actualizado con exito",
+        }
+    )

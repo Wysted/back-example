@@ -12,11 +12,7 @@ from app.dependencies import plugins, RawContextMiddleware
 # Routes
 from app.api.routes.user import router as user_router
 from app.api.routes.auth import router as auth_router
-from app.api.routes.profile import router as profile_router
-from app.api.routes.category import router as category_router
-from app.api.routes.files import router as files_router
-from app.api.routes.tatto import router as tattoos_router
-from app.api.routes.post import router as posts_router
+
 # Settings & Config
 from app.dependencies import settings, configuration
 
@@ -26,6 +22,8 @@ app = fastapi.FastAPI(
     openapi_url=f'{configuration.default_api}/openapi.json',
 )
 # OpenApi
+
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -34,12 +32,12 @@ def custom_openapi():
         version='1.0',
         description='API Server For files administration',
         terms_of_service='http://swagger.io/terms/',
-        contact= {
+        contact={
             'name': 'API Support',
             'url': 'http://www.swagger.io/support',
             'email': 'support@swagger.io',
         },
-        license_info= {
+        license_info={
             'name': 'Apache 2.0',
             'url': 'http://www.apache.org/licenses/LICENSE-2.0.html',
         },
@@ -52,6 +50,8 @@ def custom_openapi():
         routes=app.routes,
     )
     return openapi_schema
+
+
 app.openapi = custom_openapi
 
 # CORS
@@ -87,31 +87,30 @@ app.add_middleware(
 )
 
 # Handlers
+
+
 @app.exception_handler(exceptions.HTTPException)
 def http_exception_handler(request: fastapi.Request, exc):
     return responses.JSONResponse(
         status_code=exc.status_code,
-        content = {
+        content={
             'success': False,
             'message': exc.detail,
         }
     )
 
+
 @app.exception_handler(MongoEngineException)
 def http_exception_handler(request: fastapi.Request, exc):
     return responses.JSONResponse(
         status_code=exc.status_code,
-        content = {
+        content={
             'success': False,
             'message': 'Ha ocurrido un error en el servidor',
         }
     )
 
+
 # Routes
 app.include_router(user_router)
 app.include_router(auth_router)
-app.include_router(profile_router)
-app.include_router(category_router)
-app.include_router(files_router)
-app.include_router(tattoos_router)
-app.include_router(posts_router)

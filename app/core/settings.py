@@ -9,10 +9,7 @@ class Settings(BaseSettings):
     MONGO_HOST: str
     MONGO_CONNECTION: str
     CLIENT_URL: str
-    AWS_BUCKET: str
-    AWS_SECRET_KEY: str
-    AWS_ACCESS_KEY: str
-    AWS_REGION: str
+
     SERVER_URL: str
     class Config:
         env_file = ".env"

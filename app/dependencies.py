@@ -19,7 +19,6 @@ import fastapi.middleware.cors as cors
 from pymongo import mongo_client
 import pymongo
 # Interfaces
-from app.interfaces.user_types import UserTypes
 from app.interfaces.res import Res
 from app.interfaces.token import TokenData
 # Settings
